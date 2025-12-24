@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lexicon Legal - Premium Law Firm</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Babel Standalone (để chạy React/JSX trực tiếp trên trình duyệt) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Tailwind Configuration -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              serif: ['"Playfair Display"', 'serif'],
+              sans: ['"Inter"', 'sans-serif'],
+              roboto: ['"Roboto"', 'sans-serif'],
+            },
+            colors: {
+              brand: {
+                gold: '#C5A059',
+                goldHover: '#B08D45',
+                navy: '#0F172A',
+                navyLight: '#1E293B',
+              }
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.5s ease-out',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Playfair Display', serif;
+      }
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #C5A059;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #B08D45;
+      }
+      .font-roboto {
+        font-family: 'Roboto', sans-serif !important;
+      }
+      /* Fix for smooth scroll behavior in hash router */
+      html {
+        scroll-behavior: smooth;
+      }
+    </style>
+
+    <!-- Import Map cho React và các thư viện -->
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react/": "https://esm.sh/react@18.2.0/",
+    "react-dom": "https://esm.sh/react-dom@18.2.0?deps=react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@6.14.1?deps=react@18.2.0,react-dom@18.2.0",
+    "lucide-react": "https://esm.sh/lucide-react@0.292.0?deps=react@18.2.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+  }
+}
+</script>
+  </head>
+  <body class="bg-slate-50 text-slate-800 antialiased">
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+      import React, { useState, useEffect } from 'react';
+      import ReactDOM from 'react-dom/client';
+      import { HashRouter, Routes, Route, useLocation, Link, NavLink, useParams, Outlet } from 'react-router-dom';
+      import { 
+        Scale, Menu, X, Phone, ChevronRight, ChevronLeft, Mail, MapPin, Facebook, Linkedin, Twitter, ArrowRight, Send, 
+        CheckCircle2, Trophy, ShieldCheck, Clock, PiggyBank, Calendar, User, Search, Tag, Share2, 
+        MessageSquare, List, ChevronDown, ChevronUp, Quote, Check, Building2, Gavel, FileText, Briefcase, 
+        Shield, HeartHandshake, ArrowUp, ArrowLeft, Users 
+      } from 'lucide-react';
+
+      // ==========================================
+      // 1. TYPES & CONSTANTS
+      // ==========================================
+
+      const NAV_ITEMS = [
+        { label: 'Trang chủ', path: '/' },
+        { label: 'Giới thiệu', path: '/about' },
+        { label: 'Lĩnh vực hoạt động', path: '/practices' },
+        { label: 'Luật sư', path: '/attorneys' },
+        { label: 'Tin tức', path: '/blog' },
+        { label: 'Liên hệ', path: '/contact' },
+      ];
+
+      const PRACTICE_AREAS = [
+        {
+          id: 'corp',
+          title: 'Luật Doanh Nghiệp',
+          description: 'Tư vấn chiến lược cho các tập đoàn đa quốc gia và doanh nghiệp khởi nghiệp về sáp nhập, mua lại và quản trị.',
+          icon: Building2,
+          details: ['M&A', 'Tái cấu trúc', 'Quản trị doanh nghiệp', 'Đầu tư nước ngoài']
+        },
+        {
+          id: 'litigation',
+          title: 'Tranh Tụng & Giải Quyết Tranh Chấp',
+          description: 'Đại diện khách hàng trong các vụ kiện phức tạp với tỷ lệ thắng kiện cao tại các cấp tòa án.',
+          icon: Gavel,
+          details: ['Tranh chấp thương mại', 'Trọng tài quốc tế', 'Khiếu nại hành chính']
+        },
+        {
+          id: 'intellectual',
+          title: 'Sở Hữu Trí Tuệ',
+          description: 'Bảo vệ tài sản vô hình của bạn thông qua đăng ký bản quyền, nhãn hiệu và bằng sáng chế.',
+          icon: FileText,
+          details: ['Đăng ký nhãn hiệu', 'Bản quyền tác giả', 'Nhượng quyền thương mại']
+        },
+        {
+          id: 'real-estate',
+          title: 'Bất Động Sản',
+          description: 'Hỗ trợ pháp lý toàn diện cho các giao dịch bất động sản, quy hoạch và xây dựng.',
+          icon: Briefcase,
+          details: ['Mua bán & Chuyển nhượng', 'Dự án xây dựng', 'Tranh chấp đất đai']
+        },
+        {
+          id: 'criminal',
+          title: 'Luật Hình Sự',
+          description: 'Bào chữa chuyên nghiệp và tận tâm cho các cá nhân và tổ chức trong các vụ án hình sự.',
+          icon: Shield,
+          details: ['Bào chữa tội phạm cổ cồn trắng', 'Tội phạm kinh tế', 'Tư vấn tuân thủ']
+        },
+        {
+          id: 'family',
+          title: 'Hôn Nhân & Gia Đình',
+          description: 'Giải quyết các vấn đề gia đình với sự thấu hiểu và bảo mật tuyệt đối.',
+          icon: HeartHandshake,
+          details: ['Ly hôn & Quyền nuôi con', 'Phân chia tài sản', 'Thừa kế & Di chúc']
+        },
+      ];
+
+      const ATTORNEYS = [
+        {
+          id: '1',
+          name: 'Trần Văn Minh, JD',
+          role: 'Luật Sư Điều Hành',
+          image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=800',
+          bio: 'Với hơn 25 năm kinh nghiệm trong lĩnh vực tố tụng thương mại, Luật sư Minh đã đại diện cho nhiều tập đoàn trong Fortune 500.',
+          specialties: ['Tố tụng thương mại', 'Luật doanh nghiệp'],
+          email: 'minh.tran@lexicon.legal',
+          phone: '(028) 3888 9999'
+        },
+        {
+          id: '2',
+          name: 'Nguyễn Thị Lan Anh',
+          role: 'Luật Sư Thành Viên',
+          image: 'https://images.unsplash.com/photo-1573496359-136d4755f36f?auto=format&fit=crop&q=80&w=800',
+          bio: 'Chuyên gia hàng đầu về Sở hữu trí tuệ và Luật công nghệ, Lan Anh mang đến các giải pháp pháp lý tiên tiến cho kỷ nguyên số.',
+          specialties: ['Sở hữu trí tuệ', 'Luật công nghệ'],
+          email: 'lananh.nguyen@lexicon.legal',
+          phone: '(028) 3888 9998'
+        },
+        {
+          id: '3',
+          name: 'Lê Hoàng Nam',
+          role: 'Luật Sư Cao Cấp',
+          image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=800',
+          bio: 'Luật sư Nam chuyên về Luật Bất động sản và Xây dựng, đã tư vấn thành công cho nhiều dự án phát triển đô thị lớn.',
+          specialties: ['Bất động sản', 'Đầu tư'],
+          email: 'nam.le@lexicon.legal',
+          phone: '(028) 3888 9997'
+        }
+      ];
+
+      const TESTIMONIALS = [
+        {
+          id: 't1',
+          quote: "Sự chuyên nghiệp và kiến thức sâu rộng của Lexicon Legal đã giúp chúng tôi vượt qua giai đoạn pháp lý khó khăn nhất. Một đối tác thực sự đáng tin cậy.",
+          author: "Phạm Hùng Dũng",
+          role: "CEO, TechVi Corp"
+        },
+        {
+          id: 't2',
+          quote: "Tôi ấn tượng với cách tiếp cận chi tiết và chiến lược rõ ràng của họ. Kết quả vụ kiện vượt xa mong đợi của chúng tôi.",
+          author: "Mai Thu Huyền",
+          role: "Giám đốc Tài chính, Horizon Group"
+        },
+        {
+          id: 't3',
+          quote: "Đội ngũ luật sư tận tâm nhất mà tôi từng làm việc cùng. Họ luôn sẵn sàng giải đáp mọi thắc mắc 24/7.",
+          author: "Nguyễn Văn An",
+          role: "Chủ tịch, An Phat Holdings"
+        }
+      ];
+
+      const STATS = [
+        { value: '25+', label: 'Năm Kinh Nghiệm' },
+        { value: '1000+', label: 'Vụ Việc Thành Công' },
+        { value: '50+', label: 'Luật Sư Chuyên Nghiệp' },
+        { value: '98%', label: 'Tỷ Lệ Thắng Kiện' },
+      ];
+
+      const BLOG_POSTS = [
+        {
+          id: '1',
+          title: 'Những Thay Đổi Mới Trong Luật Doanh Nghiệp 2024',
+          excerpt: 'Phân tích chi tiết về các quy định mới ảnh hưởng đến quản trị công ty và trách nhiệm của người quản lý.',
+          content: '<p>Năm 2024 đánh dấu nhiều thay đổi quan trọng trong bối cảnh kinh tế toàn cầu đầy biến động. Các doanh nghiệp cần nắm bắt kịp thời những sửa đổi trong Luật Doanh nghiệp để đảm bảo tuân thủ và tối ưu hóa hoạt động quản trị.</p><h3>Những Điểm Mới Về Quản Trị Công Ty</h3><p>Luật mới tập trung vào việc tăng cường tính minh bạch và trách nhiệm giải trình của Hội đồng quản trị. Cụ thể, các quy định về công bố thông tin đã được siết chặt hơn.</p><h3>Trách Nhiệm Của Người Quản Lý</h3><p>Người quản lý doanh nghiệp nay phải chịu trách nhiệm cá nhân cao hơn đối với các quyết định gây thiệt hại cho công ty.</p><h3>Tác Động Đến Doanh Nghiệp Nhỏ Và Vừa</h3><p>Các thủ tục hành chính đã được đơn giản hóa đáng kể để hỗ trợ khối doanh nghiệp này.</p>',
+          date: '15/05/2024',
+          author: 'Trần Văn Minh',
+          category: 'Luật Doanh Nghiệp',
+          image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=800'
+        },
+        {
+          id: '2',
+          title: 'Bảo Hộ Thương Hiệu Trong Kỷ Nguyên Số: Thách Thức Và Giải Pháp',
+          excerpt: 'Làm thế nào để bảo vệ nhãn hiệu của bạn trước các hành vi xâm phạm trên môi trường internet và thương mại điện tử.',
+          content: '<p>Trong kỷ nguyên số, việc bảo vệ thương hiệu trở nên cấp thiết hơn bao giờ hết khi các hành vi xâm phạm ngày càng tinh vi và khó kiểm soát.</p><h3>Thực Trạng Xâm Phạm Thương Hiệu Online</h3><p>Hàng giả, hàng nhái tràn lan trên các sàn thương mại điện tử đang là vấn nạn nhức nhối.</p><h3>Giải Pháp Công Nghệ</h3><p>Sử dụng các công cụ rà soát tự động và blockchain để xác thực nguồn gốc sản phẩm.</p><h3>Khuyến Nghị Cho Doanh Nghiệp</h3><p>Đăng ký bảo hộ sớm và xây dựng bộ phận giám sát thương hiệu chuyên trách.</p>',
+          date: '10/05/2024',
+          author: 'Nguyễn Thị Lan Anh',
+          category: 'Sở Hữu Trí Tuệ',
+          image: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&q=80&w=800'
+        },
+        {
+          id: '3',
+          title: 'Quy Trình Giải Quyết Tranh Chấp Đất Đai Tại Tòa Án',
+          excerpt: 'Hướng dẫn các bước chuẩn bị hồ sơ và quy trình tố tụng dân sự trong các vụ án tranh chấp quyền sử dụng đất.',
+          content: '<p>Tranh chấp đất đai là một trong những loại tranh chấp phổ biến và phức tạp nhất, đòi hỏi người tham gia tố tụng phải nắm vững quy trình pháp lý.</p><h3>Chuẩn Bị Hồ Sơ Khởi Kiện</h3><p>Hồ sơ cần bao gồm Giấy chứng nhận quyền sử dụng đất và các tài liệu chứng minh nguồn gốc đất.</p><h3>Hòa Giải Tại Cơ Sở</h3><p>Đây là thủ tục bắt buộc trước khi nộp đơn khởi kiện ra Tòa án nhân dân.</p><h3>Trình Tự Xét Xử Sơ Thẩm</h3><p>Phiên tòa sẽ diễn ra theo các bước từ khai mạc, tranh tụng đến nghị án.</p>',
+          date: '02/05/2024',
+          author: 'Lê Hoàng Nam',
+          category: 'Bất Động Sản',
+          image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=800'
+        },
+        {
+          id: '4',
+          title: 'Lưu Ý Pháp Lý Khi Ký Kết Hợp Đồng Lao Động Với Người Nước Ngoài',
+          excerpt: 'Các doanh nghiệp cần đặc biệt lưu ý về giấy phép lao động và các quy định về bảo hiểm xã hội.',
+          content: '<p>Khi tuyển dụng lao động nước ngoài, doanh nghiệp cần tuân thủ nghiêm ngặt các quy định về xuất nhập cảnh và lao động.</p><h3>Điều Kiện Cấp Giấy Phép Lao Động</h3><p>Người lao động phải chứng minh được trình độ chuyên môn và kinh nghiệm làm việc.</p><h3>Quy Định Về Bảo Hiểm Xã Hội</h3><p>Lao động nước ngoài thuộc đối tượng tham gia BHXH bắt buộc theo quy định mới.</p>',
+          date: '28/04/2024',
+          author: 'Trần Văn Minh',
+          category: 'Lao Động',
+          image: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&q=80&w=800'
+        },
+        {
+          id: '5',
+          title: 'Thủ Tục Ly Hôn Có Yếu Tố Nước Ngoài',
+          excerpt: 'Giải đáp các vướng mắc thường gặp khi thực hiện thủ tục ly hôn giữa công dân Việt Nam và người nước ngoài.',
+          content: '<p>Thủ tục ly hôn có yếu tố nước ngoài đòi hỏi sự am hiểu về tư pháp quốc tế và quy định riêng của từng quốc gia liên quan.</p><h3>Thẩm Quyền Giải Quyết</h3><p>Tòa án cấp tỉnh là nơi có thẩm quyền thụ lý các vụ việc này.</p><h3>Ủy Thác Tư Pháp</h3><p>Quá trình tống đạt giấy tờ cho đương sự ở nước ngoài thường mất nhiều thời gian.</p>',
+          date: '20/04/2024',
+          author: 'Nguyễn Thị Lan Anh',
+          category: 'Hôn Nhân Gia Đình',
+          image: 'https://images.unsplash.com/photo-1633613286991-611fe299c4be?auto=format&fit=crop&q=80&w=800'
+        },
+        {
+          id: '6',
+          title: 'Thuế Và Các Quy Định Mới Cho Startups Công Nghệ',
+          excerpt: 'Tổng hợp các ưu đãi thuế và khung pháp lý Sandbox mới nhất dành cho doanh nghiệp khởi nghiệp sáng tạo.',
+          content: '<p>Chính phủ vừa ban hành nghị định mới về cơ chế thử nghiệm có kiểm soát (Sandbox) cho công nghệ tài chính.</p><h3>Ưu Đãi Thuế Thu Nhập Doanh Nghiệp</h3><p>Miễn thuế 4 năm và giảm 50% số thuế phải nộp trong 9 năm tiếp theo.</p><h3>Bảo Vệ Dữ Liệu Người Dùng</h3><p>Startups cần tuân thủ nghiêm ngặt Nghị định 13 về bảo vệ dữ liệu cá nhân.</p>',
+          date: '10/04/2024',
+          author: 'Lê Hoàng Nam',
+          category: 'Luật Doanh Nghiệp',
+          image: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&q=80&w=800'
+        }
+      ];
+
+      const PRESS_ITEMS = [
+        { id: 'p1', name: 'VnExpress', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Logo_VnExpress.png/1200px-Logo_VnExpress.png', url: '#' },
+        { id: 'p2', name: 'Forbes Vietnam', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Forbes_Vietnam_logo.svg/2560px-Forbes_Vietnam_logo.svg.png', url: '#' },
+        { id: 'p3', name: 'Cafef', logo: 'https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-CafeF.png', url: '#' },
+        { id: 'p4', name: 'Saigon Times', logo: 'https://upload.wikimedia.org/wikipedia/vi/6/6f/Logo_The_Saigon_Times.png', url: '#' },
+        { id: 'p5', name: 'LuatSuVN', logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_z8c3M-l9T_d_v6r0_u_z_w_y_x_A_B_C_D&s', url: '#' },
+      ];
+
+      // ==========================================
+      // 2. COMPONENTS
+      // ==========================================
+
+      const Section = ({ children, className = '', bg = 'white', id }) => {
+        const bgClasses = {
+          white: 'bg-white',
+          light: 'bg-slate-50',
+          dark: 'bg-slate-900',
+          navy: 'bg-brand-navy',
+        };
+        return (
+          <section id={id} className={`py-20 md:py-24 ${bgClasses[bg]} ${className}`}>
+            <div className="container mx-auto px-6 md:px-12 lg:px-24">
+              {children}
+            </div>
+          </section>
+        );
+      };
+
+      const PostCard = ({ post, layout = 'grid' }) => {
+        const postLink = `/blog/${post.id}`;
+        if (layout === 'list') {
+          return (
+            <div className="flex flex-col md:flex-row gap-6 bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all border border-slate-100 group relative">
+              <Link to={postLink} className="absolute inset-0 z-0" aria-label={`Read ${post.title}`} />
+              <div className="md:w-1/3 h-64 md:h-auto overflow-hidden relative">
+                <img src={post.image} alt={post.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
+                <span className="absolute top-4 left-4 bg-brand-gold text-white text-xs font-bold px-3 py-1 uppercase rounded-sm z-10 pointer-events-none">
+                  {post.category}
+                </span>
+              </div>
+              <div className="p-6 md:w-2/3 flex flex-col justify-center relative pointer-events-none">
+                <div className="flex items-center space-x-4 text-xs text-slate-500 mb-3">
+                  <span className="flex items-center"><Calendar size={14} className="mr-1"/> {post.date}</span>
+                  <span className="flex items-center"><User size={14} className="mr-1"/> {post.author}</span>
+                </div>
+                <h3 className="text-2xl font-bold text-brand-navy mb-3 group-hover:text-brand-gold transition-colors leading-tight font-sans">
+                  {post.title}
+                </h3>
+                <p className="text-slate-600 mb-4 line-clamp-2">{post.excerpt}</p>
+                <span className="inline-flex items-center text-sm font-semibold text-brand-navy group-hover:text-brand-gold transition-colors">
+                  Đọc tiếp <ArrowRight size={16} className="ml-1" />
+                </span>
+              </div>
+            </div>
+          );
+        }
+        return (
+          <div className="flex flex-col bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-slate-100 group h-full relative cursor-pointer">
+            <Link to={postLink} className="absolute inset-0 z-10" aria-label={`Read ${post.title}`} />
+            <div className="h-56 overflow-hidden relative">
+              <img src={post.image} alt={post.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
+              <div className="absolute inset-0 bg-brand-navy/20 group-hover:bg-transparent transition-colors"></div>
+              <span className="absolute top-4 left-4 bg-brand-navy text-white text-xs font-bold px-3 py-1 uppercase rounded-sm z-20 pointer-events-none">
+                {post.category}
+              </span>
+            </div>
+            <div className="p-6 flex flex-col flex-grow relative">
+              <div className="flex items-center space-x-4 text-xs text-slate-500 mb-3">
+                <span className="flex items-center"><Calendar size={14} className="mr-1"/> {post.date}</span>
+              </div>
+              <h3 className="text-xl font-bold text-brand-navy group-hover:text-brand-gold transition-colors line-clamp-2 leading-snug font-sans mb-3">
+                {post.title}
+              </h3>
+              <p className="text-slate-600 text-sm mb-4 line-clamp-3 flex-grow">{post.excerpt}</p>
+              <div className="pt-4 border-t border-slate-100 mt-auto">
+                <span className="inline-flex items-center text-xs font-bold text-brand-gold uppercase tracking-widest group-hover:text-brand-navy transition-colors">
+                  Đọc thêm <ArrowRight size={14} className="ml-1" />
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const TestimonialCarousel = ({ testimonials }) => {
+        const [currentIndex, setCurrentIndex] = useState(0);
+        const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+
+        useEffect(() => {
+          let interval;
+          if (isAutoPlaying) {
+            interval = setInterval(() => {
+              setCurrentIndex((prev) => (prev === testimonials.length - 1 ? 0 : prev + 1));
+            }, 5000);
+          }
+          return () => clearInterval(interval);
+        }, [isAutoPlaying, testimonials.length]);
+
+        const handlePrev = () => {
+          setIsAutoPlaying(false);
+          setCurrentIndex((prev) => (prev === 0 ? testimonials.length - 1 : prev - 1));
+        };
+
+        const handleNext = () => {
+          setIsAutoPlaying(false);
+          setCurrentIndex((prev) => (prev === testimonials.length - 1 ? 0 : prev + 1));
+        };
+
+        return (
+          <div className="relative w-full max-w-4xl mx-auto px-4">
+            <div className="overflow-hidden relative min-h-[300px] flex items-center justify-center">
+              {testimonials.map((t, index) => (
+                <div
+                  key={t.id}
+                  className={`absolute top-0 left-0 w-full h-full transition-all duration-700 ease-in-out transform flex flex-col items-center justify-center text-center p-8 bg-white rounded-lg shadow-sm border border-slate-100
+                    ${index === currentIndex ? 'opacity-100 translate-x-0 z-10 scale-100' : 'opacity-0 translate-x-full z-0 scale-95'}
+                    ${index < currentIndex ? '-translate-x-full' : ''}
+                  `}
+                  style={{ 
+                     transform: index === currentIndex ? 'translateX(0)' : index < currentIndex ? 'translateX(-100%)' : 'translateX(100%)',
+                     opacity: index === currentIndex ? 1 : 0
+                  }}
+                >
+                  <Quote size={48} className="text-brand-gold/20 mb-6" />
+                  <p className="text-slate-700 text-lg md:text-xl italic mb-8 font-light leading-relaxed">
+                    "{t.quote}"
+                  </p>
+                  <div>
+                    <h4 className="font-serif font-bold text-brand-navy text-xl">{t.author}</h4>
+                    <p className="text-sm text-brand-gold font-medium uppercase tracking-wider mt-1">{t.role}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button onClick={handlePrev} className="absolute top-1/2 -left-4 md:-left-12 transform -translate-y-1/2 p-3 rounded-full bg-white text-brand-navy shadow-md hover:bg-brand-gold hover:text-white transition-all z-20">
+              <ChevronLeft size={24} />
+            </button>
+            <button onClick={handleNext} className="absolute top-1/2 -right-4 md:-right-12 transform -translate-y-1/2 p-3 rounded-full bg-white text-brand-navy shadow-md hover:bg-brand-gold hover:text-white transition-all z-20">
+              <ChevronRight size={24} />
+            </button>
+            <div className="flex justify-center space-x-2 mt-8">
+              {testimonials.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => { setIsAutoPlaying(false); setCurrentIndex(idx); }}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${idx === currentIndex ? 'bg-brand-gold w-8' : 'bg-slate-300 hover:bg-brand-gold/50'}`}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      };
+
+      const Sidebar = ({ customTitle, customPosts }) => {
+        const displayPosts = customPosts || BLOG_POSTS.slice(0, 3);
+        const displayTitle = customTitle || "Bài Viết Mới";
+        return (
+          <aside className="space-y-8">
+            <div className="bg-white p-6 rounded shadow-sm border border-slate-100">
+              <h3 className="font-serif font-bold text-xl text-brand-navy mb-4 relative pb-2 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-12 after:h-[2px] after:bg-brand-gold">
+                Tìm Kiếm
+              </h3>
+              <form action="/search" className="relative">
+                <input type="text" placeholder="Tìm kiếm..." className="w-full pl-4 pr-10 py-3 border border-slate-200 rounded focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none"/>
+                <button type="submit" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-brand-gold">
+                  <Search size={20} />
+                </button>
+              </form>
+            </div>
+            <div className="bg-white p-6 rounded shadow-sm border border-slate-100">
+              <h3 className="font-serif font-bold text-xl text-brand-navy mb-4 relative pb-2 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-12 after:h-[2px] after:bg-brand-gold">
+                Danh Mục
+              </h3>
+              <ul className="space-y-2">
+                {PRACTICE_AREAS.map((area) => (
+                  <li key={area.id}>
+                    <Link to={`/category/${area.id}`} className="flex items-center justify-between text-slate-600 hover:text-brand-gold hover:pl-2 transition-all py-2 border-b border-slate-50 last:border-0">
+                      <span>{area.title}</span><ChevronRight size={14} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-white p-6 rounded shadow-sm border border-slate-100">
+              <h3 className="font-serif font-bold text-xl text-brand-navy mb-6 relative pb-2 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-12 after:h-[2px] after:bg-brand-gold">
+                {displayTitle}
+              </h3>
+              <div className="space-y-4">
+                {displayPosts.map((post) => (
+                  <div key={post.id} className="flex gap-4 group">
+                    <div className="w-20 h-20 flex-shrink-0 overflow-hidden rounded">
+                      <img src={post.image} alt={post.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                    </div>
+                    <div>
+                      <Link to={`/blog/${post.id}`}>
+                        <h4 className="font-bold text-brand-navy text-sm leading-snug hover:text-brand-gold transition-colors mb-1 font-sans">
+                          {post.title}
+                        </h4>
+                      </Link>
+                      <span className="text-xs text-slate-400">{post.date}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
+        );
+      };
+
+      const Hero = () => {
+        return (
+          <section className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
+            <div className="absolute inset-0 z-0">
+              <img src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=1170&auto=format&fit=crop" alt="Background" className="w-full h-full object-cover"/>
+              <div className="absolute inset-0 bg-brand-navy/70 mix-blend-multiply"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-brand-navy via-transparent to-transparent opacity-90"></div>
+            </div>
+            <div className="container mx-auto px-4 md:px-6 relative z-10 text-center">
+              <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+                <h2 className="text-brand-gold font-bold tracking-widest uppercase text-sm md:text-base mb-2">Đẳng Cấp - Tận Tâm - Hiệu Quả</h2>
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-white leading-tight drop-shadow-lg">
+                  Công Lý Của Bạn <br/> <span className="text-slate-200">Là Sứ Mệnh Của Chúng Tôi</span>
+                </h1>
+                <p className="text-slate-200 text-lg md:text-xl max-w-2xl mx-auto font-light leading-relaxed drop-shadow-md">
+                  Lexicon Legal mang đến giải pháp pháp lý toàn diện, bảo vệ quyền lợi tối cao của khách hàng với đội ngũ luật sư hàng đầu Việt Nam.
+                </p>
+                <div className="flex flex-col md:flex-row items-center justify-center gap-4 pt-8">
+                  <Link to="/contact" className="group relative px-8 py-4 bg-brand-gold text-white font-semibold rounded overflow-hidden shadow-lg hover:shadow-brand-gold/40 transition-all">
+                    <div className="absolute inset-0 w-full h-full bg-white/20 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500"></div>
+                    <span className="relative flex items-center">
+                      Tư Vấn Ngay <ChevronRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                  </Link>
+                  <Link to="/practices" className="px-8 py-4 bg-transparent border border-white text-white font-semibold rounded hover:bg-white hover:text-brand-navy transition-all">
+                    Tìm Hiểu Dịch Vụ
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      };
+
+      const Header = () => {
+        const [isScrolled, setIsScrolled] = useState(false);
+        const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+        const location = useLocation();
+        const isTransparentPage = location.pathname === '/' || location.pathname.startsWith('/blog/');
+
+        useEffect(() => {
+          const handleScroll = () => setIsScrolled(window.scrollY > 20);
+          window.addEventListener('scroll', handleScroll);
+          return () => window.removeEventListener('scroll', handleScroll);
+        }, []);
+
+        useEffect(() => {
+          document.body.style.overflow = isMobileMenuOpen ? 'hidden' : 'unset';
+          return () => { document.body.style.overflow = 'unset'; };
+        }, [isMobileMenuOpen]);
+
+        const showSolidHeader = (isScrolled || !isTransparentPage) && !isMobileMenuOpen;
+
+        return (
+          <>
+            <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${showSolidHeader ? 'bg-brand-navy/95 backdrop-blur-md shadow-lg py-3 border-b border-brand-gold/20' : 'bg-transparent py-4 md:py-6'}`}>
+              <div className="container mx-auto px-6 md:px-12 lg:px-24">
+                <div className="flex items-center justify-between">
+                  <Link to="/" className="flex items-center space-x-3 group relative z-50" onClick={() => setIsMobileMenuOpen(false)}>
+                    <div className={`p-2 rounded transition-colors ${showSolidHeader || isMobileMenuOpen ? 'bg-brand-gold text-white' : 'bg-white text-brand-navy'}`}>
+                      <Scale size={28} strokeWidth={1.5} />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className={`font-serif text-2xl font-bold tracking-tight ${showSolidHeader || isMobileMenuOpen ? 'text-white' : 'text-white drop-shadow-md'}`}>LEXICON</span>
+                      <span className={`text-[0.65rem] uppercase tracking-[0.2em] font-medium ${showSolidHeader || isMobileMenuOpen ? 'text-brand-gold' : 'text-white/90 drop-shadow-md'}`}>Legal Associates</span>
+                    </div>
+                  </Link>
+
+                  <nav className="hidden lg:flex items-center space-x-8">
+                    {NAV_ITEMS.map((item) => (
+                      <NavLink key={item.path} to={item.path} className={({ isActive }) => `text-sm font-medium tracking-wide uppercase transition-colors relative hover:text-brand-gold py-2 ${isActive ? 'text-brand-gold' : showSolidHeader ? 'text-slate-200' : 'text-white/90 drop-shadow-sm'}`}>
+                        {item.label}
+                      </NavLink>
+                    ))}
+                    <Link to="/contact" className="ml-4 flex items-center space-x-2 bg-brand-gold hover:bg-brand-goldHover text-white px-5 py-2.5 rounded transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-medium">
+                      <Phone size={16} /><span>Tư vấn miễn phí</span>
+                    </Link>
+                  </nav>
+
+                  <button className="lg:hidden relative z-50 p-2 focus:outline-none" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} aria-label="Menu">
+                    {isMobileMenuOpen ? <X size={32} className="text-white" /> : <Menu size={32} className={`${showSolidHeader ? 'text-white' : 'text-white drop-shadow-md'} transition-colors duration-300`} />}
+                  </button>
+                </div>
+              </div>
+            </header>
+
+            <div className={`fixed inset-0 bg-brand-navy/98 backdrop-blur-xl z-40 flex flex-col pt-28 px-6 transition-all duration-500 ease-out lg:hidden ${isMobileMenuOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-8'}`}>
+                <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
+                <nav className="flex flex-col space-y-4 relative z-10 h-full overflow-y-auto pb-10 items-center text-center">
+                  {NAV_ITEMS.map((item, idx) => (
+                    <NavLink key={item.path} to={item.path} onClick={() => setIsMobileMenuOpen(false)} style={{ transitionDelay: `${idx * 50}ms` }} className={({ isActive }) => `w-full max-w-xs py-3 text-xl font-serif font-bold border-b border-slate-700/30 transition-all transform ${isMobileMenuOpen ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'} ${isActive ? 'text-brand-gold border-brand-gold/50' : 'text-slate-300 hover:text-white hover:border-slate-500'}`}>
+                      {item.label}
+                    </NavLink>
+                  ))}
+                  <div className="pt-8 mt-6 w-full max-w-xs">
+                     <Link to="/contact" onClick={() => setIsMobileMenuOpen(false)} className="w-full flex items-center justify-center space-x-3 bg-brand-gold hover:bg-white hover:text-brand-navy text-white px-8 py-4 rounded-lg transition-all text-lg font-bold shadow-lg transform hover:-translate-y-1">
+                      <Phone size={20} /><span>Tư Vấn Ngay</span>
+                    </Link>
+                    <div className="text-center mt-8 text-slate-500 text-sm space-y-2">
+                      <p>Hotline: <span className="text-slate-300 font-bold">028 3888 9999</span></p>
+                      <p>Bitexco Financial Tower, TP.HCM</p>
+                    </div>
+                  </div>
+                </nav>
+            </div>
+          </>
+        );
+      };
+
+      const Footer = () => {
+        return (
+          <footer className="bg-brand-navy text-slate-300 border-t-4 border-brand-gold relative overflow-hidden">
+            <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
+            <div className="absolute -top-24 -left-24 w-96 h-96 bg-brand-gold/10 rounded-full blur-3xl pointer-events-none mix-blend-screen"></div>
+            <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none mix-blend-screen"></div>
+
+            <div className="container mx-auto px-6 md:px-12 lg:px-24 pt-16 pb-8 relative z-10">
+              <div className="pb-12 mb-12 border-b border-slate-700/50 flex flex-col md:flex-row items-center justify-between gap-8 group">
+                 <div className="text-center md:text-left space-y-2">
+                    <h3 className="text-white font-serif text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">Đăng Ký Nhận Tin</h3>
+                    <p className="text-slate-400 text-sm max-w-md">Cập nhật những thông tin pháp lý mới nhất và các bài viết chuyên sâu từ chuyên gia.</p>
+                 </div>
+                 <div className="w-full md:w-auto flex-shrink-0">
+                    <form className="flex flex-col sm:flex-row gap-3 relative">
+                       <div className="relative w-full sm:w-72 group-focus-within:transform group-focus-within:scale-105 transition-transform duration-300">
+                          <input type="email" placeholder="Địa chỉ email của bạn" className="bg-slate-800/80 backdrop-blur border border-slate-600 rounded px-4 py-3 w-full focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold text-white placeholder-slate-500 transition-all shadow-inner"/>
+                          <Mail size={18} className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-500" />
+                       </div>
+                       <button className="relative overflow-hidden bg-brand-gold text-white font-bold px-8 py-3 rounded shadow-lg hover:shadow-brand-gold/30 transition-all duration-300 group/btn">
+                          <span className="relative z-10 flex items-center justify-center">Đăng Ký <Send size={16} className="ml-2 transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" /></span>
+                          <div className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-in-out skew-x-12"></div>
+                       </button>
+                    </form>
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+                <div className="space-y-6">
+                  <Link to="/" className="flex items-center space-x-2 group">
+                     <div className="bg-brand-gold p-1.5 rounded text-white shadow-lg group-hover:bg-white group-hover:text-brand-navy transition-colors duration-300"><Scale size={24} /></div>
+                    <span className="font-serif text-2xl font-bold text-white tracking-tight group-hover:text-brand-gold transition-colors duration-300">LEXICON</span>
+                  </Link>
+                  <p className="text-sm leading-relaxed text-slate-400 text-justify border-l-2 border-slate-700 pl-4">Lexicon Legal cam kết mang lại công lý và sự an tâm cho khách hàng thông qua các dịch vụ pháp lý xuất sắc và tận tâm.</p>
+                  <div className="flex space-x-4 pt-2">
+                    {[Facebook, Twitter, Linkedin].map((Icon, i) => (
+                      <a key={i} href="#" className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 hover:bg-brand-gold hover:border-brand-gold hover:text-white transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[0_0_15px_rgba(197,160,89,0.6)]">
+                        <Icon size={18} />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-white font-serif text-lg font-bold mb-6 relative inline-block group cursor-default">Liên Kết Nhanh<span className="absolute bottom-[-8px] left-0 w-8 h-1 bg-brand-gold rounded group-hover:w-full transition-all duration-500 ease-out"></span></h4>
+                  <ul className="space-y-3 text-sm">
+                    {['Về Chúng Tôi', 'Lĩnh Vực Hoạt Động', 'Đội Ngũ Luật Sư', 'Tin Tức & Sự Kiện', 'Liên Hệ'].map((item, idx) => (
+                      <li key={idx}><Link to="#" className="group flex items-center text-slate-400 hover:text-brand-gold transition-colors duration-300"><span className="w-1.5 h-1.5 rounded-full bg-brand-gold mr-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span><span className="transform group-hover:translate-x-1 transition-transform duration-300">{item}</span></Link></li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="text-white font-serif text-lg font-bold mb-6 relative inline-block group cursor-default">Dịch Vụ Pháp Lý<span className="absolute bottom-[-8px] left-0 w-8 h-1 bg-brand-gold rounded group-hover:w-full transition-all duration-500 ease-out"></span></h4>
+                  <ul className="space-y-3 text-sm">
+                     {['Luật Doanh Nghiệp', 'Bất Động Sản', 'Sở Hữu Trí Tuệ', 'Hôn Nhân & Gia Đình', 'Tố Tụng Dân Sự'].map((item, idx) => (
+                      <li key={idx}><Link to="/practices" className="group flex items-center text-slate-400 hover:text-brand-gold transition-colors duration-300"><ArrowRight size={14} className="mr-2 opacity-50 group-hover:opacity-100 group-hover:text-brand-gold transform group-hover:translate-x-1 transition-all duration-300" /><span className="group-hover:text-white transition-colors">{item}</span></Link></li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="text-white font-serif text-lg font-bold mb-6 relative inline-block group cursor-default">Thông Tin Liên Hệ<span className="absolute bottom-[-8px] left-0 w-8 h-1 bg-brand-gold rounded group-hover:w-full transition-all duration-500 ease-out"></span></h4>
+                  <ul className="space-y-6 text-sm">
+                    <li className="flex items-start space-x-4 group cursor-pointer"><div className="bg-slate-800 p-2 rounded-full group-hover:bg-brand-gold group-hover:text-white transition-colors duration-300"><MapPin size={18} /></div><span className="text-slate-400 group-hover:text-slate-200 transition-colors">Bitexco Financial Tower<br/>2 Hải Triều, Q.1, TP. HCM</span></li>
+                    <li className="flex items-center space-x-4 group cursor-pointer"><div className="bg-slate-800 p-2 rounded-full group-hover:bg-brand-gold group-hover:text-white transition-colors duration-300"><Phone size={18} /></div><span className="text-white font-bold tracking-wide text-lg group-hover:text-brand-gold transition-colors">(028) 3888 9999</span></li>
+                    <li className="flex items-center space-x-4 group cursor-pointer"><div className="bg-slate-800 p-2 rounded-full group-hover:bg-brand-gold group-hover:text-white transition-colors duration-300"><Mail size={18} /></div><span className="text-slate-400 group-hover:text-white transition-colors">contact@lexicon.legal</span></li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-slate-500 relative z-10">
+                <p>&copy; {new Date().getFullYear()} Lexicon Legal Associates. All rights reserved.</p>
+                <div className="flex space-x-6 mt-4 md:mt-0">
+                  <Link to="#" className="hover:text-brand-gold">Chính sách bảo mật</Link><span className="text-slate-700">|</span><Link to="#" className="hover:text-brand-gold">Điều khoản sử dụng</Link>
+                </div>
+              </div>
+            </div>
+          </footer>
+        );
+      };
+
+      const FloatingContact = () => (
+        <div className="fixed bottom-6 left-6 z-50 flex flex-col space-y-4">
+          <a href="#" className="relative group flex items-center justify-center w-14 h-14 bg-blue-600 rounded-full shadow-lg hover:scale-110 transition-transform duration-300">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping"></span>
+            <span className="text-white font-bold relative z-10">Z</span>
+            <span className="absolute left-16 bg-slate-800 text-white text-xs py-1 px-3 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Chat Zalo</span>
+          </a>
+          <a href="tel:02838889999" className="relative group flex items-center justify-center w-14 h-14 bg-brand-gold rounded-full shadow-lg hover:bg-brand-goldHover hover:scale-110 transition-all duration-300">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-brand-gold opacity-75 animate-ping"></span>
+            <Phone className="text-white relative z-10" size={24} />
+            <span className="absolute left-16 bg-slate-800 text-white text-xs py-1 px-3 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Gọi Ngay</span>
+          </a>
+        </div>
+      );
+
+      const ScrollToTopButton = () => {
+        const [isVisible, setIsVisible] = useState(false);
+        useEffect(() => {
+          const toggle = () => setIsVisible(window.scrollY > 300);
+          window.addEventListener('scroll', toggle);
+          return () => window.removeEventListener('scroll', toggle);
+        }, []);
+        return (
+          <button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className={`fixed bottom-8 right-6 md:right-10 z-50 p-3 md:p-4 rounded-full bg-brand-navy text-white shadow-xl transition-all duration-300 hover:bg-brand-gold border-2 border-slate-700 hover:border-brand-gold ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
+            <ArrowUp size={20} />
+          </button>
+        );
+      };
+
+      const Layout = () => (
+        <div className="flex flex-col min-h-screen">
+          <Header />
+          <main className="flex-grow"><Outlet /></main>
+          <Footer />
+          <FloatingContact />
+          <ScrollToTopButton />
+        </div>
+      );
+
+      // ==========================================
+      // 3. PAGES
+      // ==========================================
+
+      const Home = () => {
+        return (
+          <div className="flex flex-col">
+            <Hero />
+            <Section bg="white">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                <div className="space-y-6 order-2 lg:order-1">
+                  <div className="w-16 h-1 bg-brand-gold mb-6"></div>
+                  <h2 className="text-3xl md:text-4xl font-serif font-bold text-brand-navy leading-tight">Hơn 25 Năm Kinh Nghiệm <br/> Bảo Vệ Công Lý</h2>
+                  <p className="text-slate-600 leading-relaxed text-lg text-justify">Tại Lexicon Legal, chúng tôi không chỉ là luật sư, chúng tôi là đối tác chiến lược của bạn. Chúng tôi hiểu rằng mỗi vụ việc đều mang tính cá nhân và đòi hỏi sự chú ý tỉ mỉ đến từng chi tiết.</p>
+                  <ul className="space-y-4 pt-4">{['Tư vấn chiến lược toàn diện', 'Giải pháp pháp lý tối ưu chi phí', 'Đội ngũ chuyên gia hàng đầu', 'Cam kết bảo mật tuyệt đối'].map((item, idx) => (<li key={idx} className="flex items-center space-x-3 text-slate-700 font-medium"><CheckCircle2 className="text-brand-gold flex-shrink-0" size={20} /><span>{item}</span></li>))}</ul>
+                </div>
+                <div className="relative order-1 lg:order-2">
+                  <div className="absolute -top-4 -left-4 w-full h-full border-2 border-brand-gold rounded-sm z-0 hidden md:block"></div>
+                  <img src="https://images.unsplash.com/photo-1654588834754-33346e3ee095?q=80&w=1170&auto=format&fit=crop" alt="Meeting" className="rounded-sm shadow-xl relative z-10 w-full h-auto object-cover"/>
+                </div>
+              </div>
+            </Section>
+
+            <div className="bg-brand-navy py-16 md:py-24 text-white relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-1/3 h-full bg-white/5 skew-x-12 transform translate-x-20 pointer-events-none"></div>
+               <div className="container mx-auto px-6 md:px-12 lg:px-24 relative z-10">
+                  <div className="text-center max-w-3xl mx-auto mb-12">
+                     <span className="text-brand-gold font-bold tracking-widest uppercase text-sm">Giá Trị Cốt Lõi</span>
+                     <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mt-3 mb-6">Tại Sao Chọn Chúng Tôi?</h2>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                     {[{icon: Trophy, t: 'Tỷ Lệ Thắng Cao'}, {icon: ShieldCheck, t: 'Bảo Mật Tuyệt Đối'}, {icon: Clock, t: 'Hỗ Trợ 24/7'}, {icon: PiggyBank, t: 'Chi Phí Minh Bạch'}].map((i, k) => (
+                       <div key={k} className="bg-slate-800/50 p-6 md:p-8 rounded border border-slate-700 hover:border-brand-gold transition-colors duration-300 group">
+                          <div className="w-14 h-14 bg-brand-gold/20 rounded-lg flex items-center justify-center text-brand-gold mb-6 group-hover:bg-brand-gold group-hover:text-white transition-colors"><i.icon size={28} /></div>
+                          <h3 className="text-xl font-serif font-bold mb-3">{i.t}</h3>
+                          <p className="text-slate-400 text-sm">Chúng tôi cam kết mang lại giá trị thực cho khách hàng.</p>
+                       </div>
+                     ))}
+                  </div>
+               </div>
+            </div>
+
+            <Section bg="light">
+              <div className="text-center max-w-3xl mx-auto mb-16">
+                <span className="text-brand-gold font-bold tracking-widest uppercase text-sm">Chuyên Môn Của Chúng Tôi</span>
+                <h2 className="text-3xl md:text-4xl font-serif font-bold text-brand-navy mt-3 mb-6">Lĩnh Vực Hoạt Động</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {PRACTICE_AREAS.slice(0, 6).map((area) => (
+                  <div key={area.id} className="bg-white p-8 rounded shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-t-4 border-transparent hover:border-brand-gold group">
+                    <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center text-brand-navy group-hover:bg-brand-gold group-hover:text-white transition-colors mb-6"><area.icon size={28} strokeWidth={1.5} /></div>
+                    <h3 className="text-xl font-serif font-bold text-brand-navy mb-3 group-hover:text-brand-gold transition-colors">{area.title}</h3>
+                    <p className="text-slate-600 mb-6 text-sm leading-relaxed">{area.description}</p>
+                    <Link to="/practices" className="inline-flex items-center text-sm font-semibold text-brand-navy hover:text-brand-gold transition-colors">Xem chi tiết <ArrowRight size={16} className="ml-1" /></Link>
+                  </div>
+                ))}
+              </div>
+            </Section>
+
+            <Section bg="white">
+               <div className="text-center max-w-3xl mx-auto mb-12"><span className="text-brand-gold font-bold tracking-widest uppercase text-sm">Đánh Giá</span><h2 className="text-3xl md:text-4xl font-serif font-bold text-brand-navy mt-3">Khách Hàng Nói Gì</h2></div>
+               <TestimonialCarousel testimonials={TESTIMONIALS} />
+            </Section>
+
+            <Section bg="light">
+               <div className="flex flex-col md:flex-row justify-between items-end mb-12 px-4 md:px-0">
+                  <div className="text-center md:text-left w-full md:w-auto"><span className="text-brand-gold font-bold tracking-widest uppercase text-sm">Kiến Thức Pháp Lý</span><h2 className="text-3xl md:text-4xl font-serif font-bold text-brand-navy mt-3">Tin Tức Mới Nhất</h2></div>
+                  <Link to="/blog" className="hidden md:inline-flex items-center text-brand-navy font-semibold hover:text-brand-gold transition-colors mt-4 md:mt-0">Xem Thêm Bài Viết <ArrowRight size={18} className="ml-2" /></Link>
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {BLOG_POSTS.slice(0, 6).map((post) => (<PostCard key={post.id} post={post} />))}
+               </div>
+               <div className="text-center mt-12 md:hidden"><Link to="/blog" className="inline-block px-8 py-3 border border-brand-navy text-brand-navy font-medium rounded hover:bg-brand-navy hover:text-white transition-all">Xem Thêm Bài Viết</Link></div>
+            </Section>
+          </div>
+        );
+      };
+
+      const SinglePost = () => {
+        const { id } = useParams();
+        const post = BLOG_POSTS.find(p => p.id === id) || BLOG_POSTS[0];
+        const relatedPosts = BLOG_POSTS.filter(p => p.category === post.category && p.id !== post.id).slice(0, 3);
+        const [isTocOpen, setIsTocOpen] = useState(true);
+        const [comments, setComments] = useState([{ id: '1', author: 'Minh Hoàng', date: '2024-05-16', content: 'Bài viết rất hữu ích.' }]);
+
+        useEffect(() => window.scrollTo(0, 0), [id]);
+
+        const contentParts = post.content.split('</p>');
+        const firstParagraph = contentParts[0] + '</p>';
+        let processedRemainingContent = contentParts.slice(1).join('</p>');
+        const tocItems = [];
+        let tocCount = 0;
+        processedRemainingContent = processedRemainingContent.replace(/<h3>(.*?)<\/h3>/g, (match, text) => {
+          const tid = `toc-${tocCount++}`;
+          tocItems.push({ id: tid, text });
+          return `<h3 id="${tid}" class="text-2xl font-bold mt-8 mb-4 scroll-mt-24 font-roboto text-brand-navy">${text}</h3>`;
+        });
+        if (tocItems.length === 0) { tocItems.push({id:'d1',text:'Phân tích pháp lý'}); tocItems.push({id:'d2',text:'Kết luận'}); }
+
+        return (
+          <div className="flex flex-col">
+            <div className="relative min-h-[50vh] flex items-end pb-16 pt-32 overflow-hidden bg-brand-navy">
+               <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
+               <div className="absolute inset-0 bg-gradient-to-b from-transparent to-brand-navy/90"></div>
+               <div className="container mx-auto px-6 md:px-12 lg:px-24 relative z-10 text-center md:text-left">
+                  <Link to="/blog" className="inline-flex items-center text-sm text-brand-gold hover:text-white mb-6 transition-colors font-medium"><ArrowLeft size={16} className="mr-2" /> Quay lại danh sách</Link>
+                  <div className="max-w-4xl">
+                     <span className="inline-block bg-white/10 backdrop-blur-sm text-white border border-white/20 px-4 py-1.5 rounded text-xs font-bold uppercase tracking-widest mb-6">{post.category}</span>
+                     <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-8 font-roboto">{post.title}</h1>
+                     <div className="flex flex-wrap items-center gap-6 text-sm text-slate-300 font-medium">
+                        <span>Tác giả: <span className="text-white">{post.author}</span></span>
+                        <div className="w-1 h-1 bg-brand-gold rounded-full"></div>
+                        <span>{post.date}</span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <Section bg="white">
+              <div className="flex flex-col lg:flex-row gap-16">
+                <div className="lg:w-2/3">
+                  <article className="prose prose-lg prose-slate max-w-none mb-12 font-roboto prose-headings:font-roboto prose-headings:text-brand-navy prose-a:text-brand-gold">
+                    <div className="text-xl md:text-2xl text-slate-800 leading-relaxed font-roboto mb-8 first-letter:text-4xl first-letter:font-bold first-letter:text-brand-gold first-letter:float-left first-letter:mr-2" dangerouslySetInnerHTML={{ __html: firstParagraph }} />
+                    <figure className="my-10 w-full"><img src={post.image} alt={post.title} className="w-full h-auto object-cover rounded shadow-lg" /></figure>
+                    <div className="bg-slate-50 rounded-lg border border-slate-200 mb-10 shadow-sm overflow-hidden">
+                       <div className="p-4 md:p-6 flex justify-between items-center cursor-pointer bg-slate-100/50 hover:bg-slate-100" onClick={() => setIsTocOpen(!isTocOpen)}>
+                          <h4 className="font-bold text-brand-navy text-lg flex items-center uppercase m-0 font-roboto"><List size={20} className="mr-2 text-brand-gold" /> Bố Cục Bài Viết</h4>
+                          <button className="text-slate-500">{isTocOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}</button>
+                       </div>
+                       <div className={`transition-all duration-300 ease-in-out ${isTocOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                         <div className="p-4 md:p-6 pt-0 border-t border-slate-200"><ul className="space-y-3 mt-4 list-none pl-0">{tocItems.map((item) => (<li key={item.id}><a href={`#${item.id}`} className="text-slate-700 hover:text-brand-gold transition-colors flex items-start font-roboto"><span className="mr-2 text-brand-gold">•</span>{item.text}</a></li>))}</ul></div>
+                       </div>
+                    </div>
+                    <div className="text-slate-600 leading-8 font-roboto" dangerouslySetInnerHTML={{ __html: processedRemainingContent }} />
+                    <h3 id="d1" className="text-2xl font-bold mt-8 mb-4 text-brand-navy font-roboto scroll-mt-24">Phân Tích Pháp Lý</h3><p>Nội dung chi tiết...</p>
+                    <h3 id="d2" className="text-2xl font-bold mt-8 mb-4 text-brand-navy font-roboto scroll-mt-24">Kết Luận</h3><p>Kết luận vấn đề...</p>
+                  </article>
+                  <div className="mt-16"><h3 className="font-serif font-bold text-2xl text-brand-navy mb-8 flex items-center"><span className="w-2 h-8 bg-brand-gold mr-3 rounded-sm"></span>Bình Luận</h3>
+                    {comments.map(c => (<div key={c.id} className="bg-slate-50 p-6 rounded-lg border border-slate-100 mb-4"><h5 className="font-bold text-brand-navy">{c.author}</h5><p className="font-roboto text-slate-600">{c.content}</p></div>))}
+                  </div>
+                </div>
+                <div className="lg:w-1/3"><div className="lg:sticky lg:top-32"><Sidebar customTitle="Bài Viết Liên Quan" customPosts={relatedPosts} /></div></div>
+              </div>
+            </Section>
+          </div>
+        );
+      };
+
+      const PracticeAreas = () => (
+         <div className="pt-24"><div className="bg-slate-100 py-16 text-center"><h1 className="text-4xl font-serif font-bold text-brand-navy">Lĩnh Vực Hoạt Động</h1></div>
+         <Section bg="white"><div className="space-y-24">{PRACTICE_AREAS.map((area, i) => (<div key={area.id} className={`flex flex-col ${i%2===1?'lg:flex-row-reverse':'lg:flex-row'} gap-12 items-center`}><div className="w-full lg:w-1/2 bg-slate-50 p-12 flex justify-center rounded"><area.icon size={120} className="text-brand-navy/80"/></div><div className="w-full lg:w-1/2 space-y-6"><h2 className="text-3xl font-serif font-bold text-brand-navy">{area.title}</h2><p className="text-slate-600 text-lg">{area.description}</p></div></div>))}</div></Section></div>
+      );
+      
+      const Attorneys = () => (
+         <div className="pt-24"><div className="bg-slate-100 py-16 text-center"><h1 className="text-4xl font-serif font-bold text-brand-navy">Đội Ngũ Luật Sư</h1></div>
+         <Section bg="white"><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">{ATTORNEYS.map(a => (<div key={a.id} className="group bg-white rounded shadow hover:shadow-xl"><img src={a.image} className="w-full h-80 object-cover"/><div className="p-6 text-center"><h3 className="text-2xl font-serif font-bold text-brand-navy">{a.name}</h3><p className="text-brand-gold uppercase text-sm font-bold">{a.role}</p></div></div>))}</div></Section></div>
+      );
+
+      const Contact = () => (
+         <div className="pt-24"><div className="bg-slate-100 py-16 text-center"><h1 className="text-4xl font-serif font-bold text-brand-navy">Liên Hệ</h1></div>
+         <Section bg="white"><div className="grid grid-cols-1 lg:grid-cols-2 gap-16"><div><h2 className="text-2xl font-serif font-bold text-brand-navy mb-6">Thông Tin</h2><p className="mb-4">Tòa nhà Bitexco, Q1, HCM</p><p>(028) 3888 9999</p></div><div className="bg-slate-50 p-8 rounded"><h2 className="text-2xl font-serif font-bold text-brand-navy mb-6">Gửi Yêu Cầu</h2><form className="space-y-4"><input className="w-full p-3 border rounded" placeholder="Họ tên"/><input className="w-full p-3 border rounded" placeholder="Email"/><textarea className="w-full p-3 border rounded" rows="4" placeholder="Nội dung"></textarea><button className="w-full bg-brand-navy text-white font-bold py-3 rounded">Gửi Ngay</button></form></div></div></Section></div>
+      );
+
+      const Archive = () => (
+         <div className="pt-24"><div className="bg-slate-100 py-16 text-center"><h1 className="text-4xl font-serif font-bold text-brand-navy">Tin Tức & Sự Kiện</h1></div>
+         <Section bg="white"><div className="flex flex-col lg:flex-row gap-12"><div className="lg:w-2/3 space-y-8">{BLOG_POSTS.map(post => <PostCard key={post.id} post={post} layout="list"/>)}</div><div className="lg:w-1/3"><Sidebar/></div></div></Section></div>
+      );
+
+      const NotFound = () => (<Section bg="light" className="min-h-[70vh] flex items-center justify-center text-center"><div><h1 className="text-9xl font-serif font-bold text-brand-gold/20">404</h1><h2 className="text-4xl font-serif font-bold text-brand-navy mb-6">Không tìm thấy trang</h2><Link to="/" className="inline-block px-8 py-3 bg-brand-navy text-white rounded">Về Trang Chủ</Link></div></Section>);
+
+      // ==========================================
+      // 4. APP & MOUNT
+      // ==========================================
+
+      const ScrollToTop = () => {
+        const { pathname } = useLocation();
+        useEffect(() => window.scrollTo(0, 0), [pathname]);
+        return null;
+      };
+
+      const App = () => {
+        return (
+          <HashRouter>
+            <ScrollToTop />
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Home />} />
+                <Route path="practices" element={<PracticeAreas />} />
+                <Route path="attorneys" element={<Attorneys />} />
+                <Route path="contact" element={<Contact />} />
+                <Route path="blog" element={<Archive />} />
+                <Route path="blog/:id" element={<SinglePost />} />
+                <Route path="category/:slug" element={<Archive />} />
+                <Route path="search" element={<Archive />} />
+                <Route path="about" element={<Home />} />
+                <Route path="news" element={<Archive />} />
+                <Route path="*" element={<NotFound />} />
+              </Route>
+            </Routes>
+          </HashRouter>
+        );
+      };
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
